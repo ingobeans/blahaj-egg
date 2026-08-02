@@ -30,4 +30,4 @@ made with <3 and no ai
 
 what are you waiting for? adopt a blåhaj today !!
 
-<img src="confetti.gif"><img src="confetti.gif"><img src="confetti.gif">
+<img src="confetti.gif" height=223 width=205><img src="confetti.gif" height=223 width=205><img src="confetti.gif" height=223 width=205><img src="confetti.gif" height=223 width=205>
