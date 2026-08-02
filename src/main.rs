@@ -1,4 +1,36 @@
 slint::slint! {
+    component Button inherits TouchArea {
+        width:39px;
+        height:41px;
+        in property <image> glyph;
+
+        pointer-event() => {
+            if (self.pressed) {
+                img.source = @image-url("button_pressed.png");
+                img.x = 2px;
+                glyph.x = 2px;
+                img.y = 2px;
+                glyph.y = 2px;
+            } else {
+                img.source = @image-url("button.png");
+                img.x = 0px;
+                glyph.x = 0px;
+                img.y = 0px;
+                glyph.y = 0px;
+            }
+        }
+
+        img:=Image {
+            source: @image-url("button.png");
+            width:39px;
+            height:41px;
+        }
+        glyph:=Image {
+            source: root.glyph;
+            width:39px;
+            height:41px;
+        }
+    }
     export component App inherits Window {
         background: rgba(0, 0, 0, 0);
         no-frame: true;
@@ -10,7 +42,6 @@ slint::slint! {
         Image { source: @image-url("backdrop.png");}
         Image { source: @image-url("blahaj.png"); width: 300px; x:100px; y:170px;}
         Image { source: @image-url("egg.png");}
-        buttons := Image { source: @image-url("buttons/unpressed.png");}
         callback mouse_move(length, length);
 
         TouchArea {
@@ -30,47 +61,20 @@ slint::slint! {
             }
         }
         // buttons:
-        b1:=TouchArea {
-            width:38px;
-            height:41px;
+        b1:=Button {
             x:100px;
             y:472px;
-            pointer-event => {
-                if (self.pressed) {
-                    buttons.source = @image-url("buttons/0.png");
-                }
-                if (!b1.pressed && !b2.pressed && !b3.pressed) {
-                    buttons.source = @image-url("buttons/unpressed.png");
-                }
-            }
+            glyph: @image-url("glyphs/timer.png");
         }
-        b2:=TouchArea {
-            width:38px;
-            height:41px;
+        b2:=Button {
             x:182px;
             y:491px;
-            pointer-event => {
-                if (self.pressed) {
-                    buttons.source = @image-url("buttons/1.png");
-                }
-                if (!b1.pressed && !b2.pressed && !b3.pressed) {
-                    buttons.source = @image-url("buttons/unpressed.png");
-                }
-            }
+            glyph: @image-url("glyphs/pat.png");
         }
-        b3:=TouchArea {
-            width:38px;
-            height:41px;
+        b3:=Button {
             x:260px;
             y:472px;
-            pointer-event => {
-                if (self.pressed) {
-                    buttons.source = @image-url("buttons/2.png");
-                }
-                if (!b1.pressed && !b2.pressed && !b3.pressed) {
-                    buttons.source = @image-url("buttons/unpressed.png");
-                }
-            }
+            glyph: @image-url("glyphs/menu.png");
         }
     }
 }
