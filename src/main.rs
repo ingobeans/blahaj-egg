@@ -1,4 +1,4 @@
-use std::time::Instant;
+use std::{sync::{Mutex}, time::Instant};
 
 slint::slint! {
     component Button inherits TouchArea {
@@ -79,6 +79,7 @@ slint::slint! {
         in-out property<duration> delta: 0ms;
         in-out property<duration> prev-ticker: 0ms;
         callback callback_ticker() -> int;
+        callback start_timer();
         changed ticker => {
             delta = ((ticker) - prev-ticker);
             prev-ticker = ticker;
@@ -115,7 +116,7 @@ slint::slint! {
             glyph: @image-url("glyphs/timer.png");
 
             clicked => {
-                
+                start_timer();
             }
         }
         b2:=Button {
@@ -130,6 +131,9 @@ slint::slint! {
         }
     }
 }
+
+static START: Mutex<Option<Instant>>  = Mutex::new(None);
+
 
 fn main() {
     println!("{}, v{}", env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
@@ -154,10 +158,15 @@ fn main() {
             ));
     });
 
-    let mut start = Instant::now();
+
+    app.on_start_timer(|| {
+        *START.lock().unwrap() = Some(Instant::now());
+    });
+
     app.on_callback_ticker(move || {
         let now = Instant::now();
-        (now-start).as_secs() as i32
+        let t = START.lock().unwrap().unwrap_or_else(|| {Instant::now()});
+        (now-t).as_secs() as i32
     });
 
     app.run().unwrap();
