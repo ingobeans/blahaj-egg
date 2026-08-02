@@ -14,6 +14,8 @@ a mysterious egg appears on your desktop!! inside, a blåhaj!!
 
 made with rust and slint for UI.
 
+this project is a WIP, more features to be added. the menu button doesn't yet work, and i plan on adding hackatime integration and some leveling system for your blåhaj later. for now this is objectively a glorified timer.
+
 to build yourself, you'll need rust installed. then you can just do 
 
 ```bash
