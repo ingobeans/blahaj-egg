@@ -99,6 +99,14 @@ slint::slint! {
             prev-ticker = ticker;
             let value = callback_ticker();
             clock.seconds = value;
+            if (value >= 60*clock.target_minutes) {
+                if !timer_paused {
+                    timer_paused=true;
+                    start_timer();
+                    set_pause_timer(true);
+                    b2.glyph = @image-url("glyphs/play.png");
+                }
+            }
         };
 
         Image { source: @image-url("backdrop.png");}
@@ -160,7 +168,7 @@ slint::slint! {
                     } else {
                         self.glyph = @image-url("glyphs/pause.png");
                     }
-                    set_pause_timer(timer_paused)
+                    set_pause_timer(timer_paused);
                 }
             }
         }
