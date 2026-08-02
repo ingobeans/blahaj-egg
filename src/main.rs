@@ -15,7 +15,7 @@ slint::slint! {
         TouchArea {
             moved => {
                 if (self.pressed ) {
-                    root.mouse_move(self.mouse_x - self.pressed_x,self.mouse_y - self.pressed_y);
+                    root.mouse_move((self.mouse_x) - self.pressed_x, (self.mouse_y) - self.pressed_y);
                 }
             }
         }
