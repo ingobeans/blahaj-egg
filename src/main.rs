@@ -1,7 +1,7 @@
 use std::{collections::HashMap, sync::Mutex, time::Instant};
 
-use rgb::{Rgb, Rgba};
-use slint::{Image, SharedPixelBuffer, SharedVector};
+use rgb::{Rgba};
+use slint::{Image};
 
 
 slint::slint! {
@@ -103,23 +103,26 @@ slint::slint! {
             prev-ticker = ticker;
             let value = callback_ticker();
             clock.seconds = value;
-            if (value >= 60*clock.target_minutes) {
+            if (value >= 1*clock.target_minutes) {
                 if !timer_paused {
                     timer_paused=true;
                     start_timer();
                     set_pause_timer(true);
                     b2.glyph = @image-url("glyphs/play.png");
+                    confetti.visible = true;
                 }
             }
-            confetti.source = load_gif_frame("confetti.gif", animation-tick() / 1ms);
+            if (confetti.visible) {
+                confetti.source = load_gif_frame("confetti.gif", animation-tick() / 1ms);
+            }
         };
 
         callback load_gif_frame(string, int) -> image;
 
         Image { source: @image-url("backdrop.png");}
         blahaj:= Image { source: @image-url("blahaj.png"); width: 300px; x:100px; y:170px;}
+        confetti := Image { y:220px; visible: false;}
         Image { source: @image-url("egg.png");}
-        confetti := Image { source: @image-url("confetti.gif"); width: parent.width;height: parent.height;}
         clock := Clock {
             visible: false;
         }
@@ -148,6 +151,7 @@ slint::slint! {
             default_glyph: @image-url("glyphs/timer.png");
 
             clicked => {
+                confetti.visible = false;
                 clock.visible = !clock.visible;
                 blahaj.visible = !blahaj.visible;
                 if (clock.visible) {
@@ -170,6 +174,7 @@ slint::slint! {
             default_glyph: @image-url("glyphs/pat.png");
             clicked => {
                 if (state == 1) {
+                    confetti.visible = false;
                     timer_paused = !timer_paused;
                     if (timer_paused) {
                         self.glyph = @image-url("glyphs/play.png");
@@ -186,6 +191,7 @@ slint::slint! {
             default_glyph: @image-url("glyphs/menu.png");
             clicked => {
                 if (state == 1) {
+                    confetti.visible = false;
                     if (clock.target_minutes == 30) {
                         clock.target_minutes = 5;
                         self.glyph = @image-url("glyphs/5-30.png");
@@ -227,23 +233,27 @@ fn main() {
             ));
     });
 
-    let mut gifs = HashMap::new();
-    let mut options = gif::DecodeOptions::new();
-    options.set_color_output(gif::ColorOutput::RGBA);
-
-    let mut decoder = options.read_info(&include_bytes!("../confetti.gif")[..]).unwrap();
-    let mut frames = Vec::new();
-    while let Some(frame) = decoder.read_next_frame().unwrap() {
-        let mut slint_pixel_buffer =
-            slint::SharedPixelBuffer::<slint::Rgba8Pixel>::new(frame.width as _, frame.height as _);
-        let buffer = frame.buffer.chunks(4).map(|f| {
-            Rgba::new(f[0], f[1], f[2], f[3])
-        }).collect::<Vec<Rgba<u8>>>();
-        slint_pixel_buffer.make_mut_slice().copy_from_slice(&buffer[..]);
-        let image: Image = Image::from_rgba8(slint_pixel_buffer);
-        frames.push(image);
+    let mut gifs: HashMap<&str, Vec<Image>> = HashMap::new();
+    
+    fn preload_gif(gifs: &mut HashMap<&str, Vec<Image>>, name:&'static str, bytes:&[u8]) {
+        let mut options = gif::DecodeOptions::new();
+        options.set_color_output(gif::ColorOutput::RGBA);
+        
+        let mut decoder = options.read_info(&bytes[..]).unwrap();
+        let mut frames = Vec::new();
+        while let Some(frame) = decoder.read_next_frame().unwrap() {
+            let mut slint_pixel_buffer =
+                slint::SharedPixelBuffer::<slint::Rgba8Pixel>::new(frame.width as _, frame.height as _);
+            let buffer = frame.buffer.chunks(4).map(|f| {
+                Rgba::new(f[0], f[1], f[2], f[3])
+            }).collect::<Vec<Rgba<u8>>>();
+            slint_pixel_buffer.make_mut_slice().copy_from_slice(&buffer[..]);
+            let image: Image = Image::from_rgba8(slint_pixel_buffer);
+            frames.push(image);
+        }
+        gifs.insert(name, frames);
     }
-    gifs.insert("confetti.gif", frames);
+    preload_gif(&mut gifs, "confetti.gif", include_bytes!("../confetti.gif"));
     app.on_load_gif_frame(move |a,b| {
         let g = &gifs[a.to_string().as_str()];
         let l = g.len();
