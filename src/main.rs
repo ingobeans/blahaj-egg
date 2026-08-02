@@ -4,6 +4,8 @@ slint::slint! {
     component Button inherits TouchArea {
         width:39px;
         height:41px;
+        in property <bool> glyph_set: false;
+        in property <image> default_glyph;
         in property <image> glyph;
 
         pointer-event() => {
@@ -28,7 +30,13 @@ slint::slint! {
             height:41px;
         }
         glyph:=Image {
-            source: root.glyph;
+            source: {
+                if (glyph_set) {
+                    root.glyph
+                } else {
+                    root.default_glyph
+                } 
+            };
             width:39px;
             height:41px;
         }
@@ -76,11 +84,15 @@ slint::slint! {
         width: 410px;
         height: 563px;
 
+        property <int> state;
+        property <bool> timer_paused;
+
         in-out property<duration> ticker: animation-tick();
         in-out property<duration> delta: 0ms;
         in-out property<duration> prev-ticker: 0ms;
         callback callback_ticker() -> int;
         callback start_timer();
+        callback set_pause_timer(bool);
         changed ticker => {
             delta = ((ticker) - prev-ticker);
             prev-ticker = ticker;
@@ -116,30 +128,52 @@ slint::slint! {
         b1:=Button {
             x:100px;
             y:472px;
-            glyph: @image-url("glyphs/timer.png");
+            default_glyph: @image-url("glyphs/timer.png");
 
             clicked => {
                 clock.visible = !clock.visible;
                 blahaj.visible = !blahaj.visible;
                 if (clock.visible) {
+                    state = 1;
                     start_timer();
+                    b2.glyph_set = true;
+                    b3.glyph_set = true;
+                    b2.glyph = @image-url("glyphs/pause.png");
+                    b3.glyph = @image-url("glyphs/timer.png");
+                } else {
+                    state = 0;
+                    b2.glyph_set = false;
+                    b3.glyph_set = false;
                 }
             }
         }
         b2:=Button {
             x:182px;
             y:491px;
-            glyph: @image-url("glyphs/pat.png");
+            default_glyph: @image-url("glyphs/pat.png");
+            clicked => {
+                if (state == 1) {
+                    timer_paused = !timer_paused;
+                    if (timer_paused) {
+                        self.glyph = @image-url("glyphs/play.png");
+                    } else {
+                        self.glyph = @image-url("glyphs/pause.png");
+                    }
+                    set_pause_timer(timer_paused)
+                }
+            }
         }
         b3:=Button {
             x:260px;
             y:472px;
-            glyph: @image-url("glyphs/menu.png");
+            default_glyph: @image-url("glyphs/menu.png");
         }
     }
 }
 
 static START: Mutex<Option<Instant>>  = Mutex::new(None);
+static PAUSED_AT: Mutex<Option<Instant>>  = Mutex::new(None);
+static PAUSED: Mutex<bool>  = Mutex::new(false);
 
 
 fn main() {
@@ -169,9 +203,20 @@ fn main() {
     app.on_start_timer(|| {
         *START.lock().unwrap() = Some(Instant::now());
     });
+    app.on_set_pause_timer(|state| {
+        *PAUSED.lock().unwrap() = state;
+        if state {
+            *PAUSED_AT.lock().unwrap() = Some(Instant::now());
+        }
+        if !state {
+            let passed = (PAUSED_AT.lock().unwrap().unwrap() - START.lock().unwrap().unwrap());
+            *START.lock().unwrap() = Some(Instant::now()-passed);
+        }
+    });
 
     app.on_callback_ticker(move || {
-        let now = Instant::now();
+        let now = 
+        if *PAUSED.lock().unwrap() {PAUSED_AT.lock().unwrap().unwrap()} else {Instant::now()};
         START.lock().unwrap().map_or(0, |a| {(now - a).as_secs() as i32})
     });
 
