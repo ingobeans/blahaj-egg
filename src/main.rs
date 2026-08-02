@@ -7,9 +7,9 @@ slint::slint! {
         height: 559px;
         Text { text: "Hello World!"; x:0;y:0;}
 
-        Image { source: @image-url("backdrop.png"); width: 415px;}
+        Image { source: @image-url("backdrop.png");}
         Image { source: @image-url("blahaj.png"); width: 300px; x:100px;}
-        Image { source: @image-url("egg.png"); width: 415px;}
+        Image { source: @image-url("egg.png");}
     }
 }
 
