@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 slint::slint! {
     component Button inherits TouchArea {
         width:39px;
@@ -31,6 +33,40 @@ slint::slint! {
             height:41px;
         }
     }
+    component Clock inherits Image {
+        in property <int> seconds;
+        source: @image-url("clock/base.png");
+
+        pointer:=Image {
+            source: @image-url("clock/pointer.png");
+            transform-rotation: seconds / (5.0*60.0) * 360.0deg;
+            x:116px;
+            y:265px;
+        }
+
+        text:=Text {
+            text: {
+                let p1 = (Math.floor(seconds / 60)) + "";
+                let p2 = (Math.mod(seconds,60)) + "";
+                if (p1.character-count == 1) {
+                    if (p2.character-count == 1) {
+                        "0" + p1 + ":" + "0" + p2
+                    } else {
+                        "0" +p1 + ":" + p2
+                    }
+                } else if (p2.character-count == 1) {
+                    p1 + ":" + "0" + p2
+                } else {
+                    p1 + ":" + p2
+                }
+            };
+            font-family: "Calibri";
+            x:165px;
+            y:225px;
+            font-size: 32px;
+        }
+    }
+
     export component App inherits Window {
         background: rgba(0, 0, 0, 0);
         no-frame: true;
@@ -39,9 +75,21 @@ slint::slint! {
         width: 410px;
         height: 563px;
 
+        in-out property<duration> ticker: animation-tick();
+        in-out property<duration> delta: 0ms;
+        in-out property<duration> prev-ticker: 0ms;
+        callback callback_ticker() -> int;
+        changed ticker => {
+            delta = ((ticker) - prev-ticker);
+            prev-ticker = ticker;
+            let value = callback_ticker();
+            clock.seconds = value;
+        };
+
         Image { source: @image-url("backdrop.png");}
         Image { source: @image-url("blahaj.png"); width: 300px; x:100px; y:170px;}
         Image { source: @image-url("egg.png");}
+        clock := Clock {}
         callback mouse_move(length, length);
 
         TouchArea {
@@ -65,6 +113,10 @@ slint::slint! {
             x:100px;
             y:472px;
             glyph: @image-url("glyphs/timer.png");
+
+            clicked => {
+                
+            }
         }
         b2:=Button {
             x:182px;
@@ -81,15 +133,15 @@ slint::slint! {
 
 fn main() {
     println!("{}, v{}", env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
-    let pin_win = App::new().unwrap();
+    let app = App::new().unwrap();
 
-    pin_win
+    app
         .window()
         .set_position(slint::LogicalPosition::new(0., 0.));
 
-    let pin_win_clone = pin_win.as_weak();
-    pin_win.on_mouse_move(move |delta_x, delta_y| {
-        let pin_win_clone = pin_win_clone.unwrap();
+    let app_clone = app.as_weak();
+    app.on_mouse_move(move |delta_x, delta_y| {
+        let pin_win_clone = app_clone.unwrap();
         let logical_pos = pin_win_clone
             .window()
             .position()
@@ -102,5 +154,11 @@ fn main() {
             ));
     });
 
-    pin_win.run().unwrap();
+    let mut start = Instant::now();
+    app.on_callback_ticker(move || {
+        let now = Instant::now();
+        (now-start).as_secs() as i32
+    });
+
+    app.run().unwrap();
 }
