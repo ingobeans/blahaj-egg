@@ -46,8 +46,9 @@ slint::slint! {
 
         text:=Text {
             text: {
-                let p1 = (Math.floor(seconds / 60)) + "";
-                let p2 = (Math.mod(seconds,60)) + "";
+                let remaining = 60*5 - seconds;
+                let p1 = (Math.floor(remaining / 60)) + "";
+                let p2 = (Math.mod(remaining,60)) + "";
                 if (p1.character-count == 1) {
                     if (p2.character-count == 1) {
                         "0" + p1 + ":" + "0" + p2
@@ -88,9 +89,11 @@ slint::slint! {
         };
 
         Image { source: @image-url("backdrop.png");}
-        Image { source: @image-url("blahaj.png"); width: 300px; x:100px; y:170px;}
+        blahaj:= Image { source: @image-url("blahaj.png"); width: 300px; x:100px; y:170px;}
         Image { source: @image-url("egg.png");}
-        clock := Clock {}
+        clock := Clock {
+            visible: false;
+        }
         callback mouse_move(length, length);
 
         TouchArea {
@@ -116,7 +119,11 @@ slint::slint! {
             glyph: @image-url("glyphs/timer.png");
 
             clicked => {
-                start_timer();
+                clock.visible = !clock.visible;
+                blahaj.visible = !blahaj.visible;
+                if (clock.visible) {
+                    start_timer();
+                }
             }
         }
         b2:=Button {
@@ -165,8 +172,7 @@ fn main() {
 
     app.on_callback_ticker(move || {
         let now = Instant::now();
-        let t = START.lock().unwrap().unwrap_or_else(|| {Instant::now()});
-        (now-t).as_secs() as i32
+        START.lock().unwrap().map_or(0, |a| {(now - a).as_secs() as i32})
     });
 
     app.run().unwrap();
