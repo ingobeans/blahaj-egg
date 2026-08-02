@@ -1,6 +1,7 @@
-use std::{collections::HashMap, sync::Mutex, time::Instant};
+use std::{borrow::Cow, cmp::Ordering, collections::HashMap, process::exit, sync::Mutex, time::Instant};
 
-use rgb::{Rgba};
+use gif::DisposalMethod;
+use rgb::{ComponentBytes, Rgba};
 use slint::{Image};
 
 
@@ -260,23 +261,24 @@ fn main() {
         let mut options = gif::DecodeOptions::new();
         options.set_color_output(gif::ColorOutput::RGBA);
         
-        let mut decoder = options.read_info(&bytes[..]).unwrap();
+        let decoder = options.read_info(&bytes[..]).unwrap();
         let mut frames = Vec::new();
-        while let Some(frame) = decoder.read_next_frame().unwrap() {
+        for frame in decoder.into_iter().flatten() {
             let mut slint_pixel_buffer =
                 slint::SharedPixelBuffer::<slint::Rgba8Pixel>::new(frame.width as _, frame.height as _);
-            let buffer = frame.buffer.chunks(4).map(|f| {
-                Rgba::new(f[0], f[1], f[2], f[3])
-            }).collect::<Vec<Rgba<u8>>>();
-            slint_pixel_buffer.make_mut_slice().copy_from_slice(&buffer[..]);
-            let image: Image = Image::from_rgba8(slint_pixel_buffer);
-            frames.push(image);
+                
+                unsafe {
+                    let g = std::mem::transmute::<_,FrameHm>(frame);
+                    let l = slint_pixel_buffer.as_slice().len();
+                    slint_pixel_buffer.make_mut_slice().copy_from_slice(&g.buffer[..l]);
+                    let image: Image = Image::from_rgba8(slint_pixel_buffer);
+                    frames.push(image);
+                }
         }
         gifs.insert(name, (frames,speed));
     }
     preload_gif(&mut gifs, "confetti.gif", include_bytes!("../confetti.gif"),15.0);
     preload_gif(&mut gifs, "pat.gif", include_bytes!("../pat.gif"),30.0);
-
 
     app.on_load_gif_frame(move |a,b| {
         let g = &gifs[a.to_string().as_str()];
@@ -304,4 +306,20 @@ fn main() {
     });
 
     app.run().unwrap();
+}
+
+#[expect(dead_code)]
+#[derive(Debug, Clone)]
+struct FrameHm<'a> {
+    pub delay: u16,
+    pub dispose: DisposalMethod,
+    pub transparent: Option<u8>,
+    pub needs_user_input: bool,
+    pub top: u16,
+    pub left: u16,
+    pub width: u16,
+    pub height: u16,
+    pub interlaced: bool,
+    pub palette: Option<Vec<u8>>,
+    pub buffer: Cow<'a, [Rgba<u8>]>,
 }
