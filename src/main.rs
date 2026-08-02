@@ -3,8 +3,8 @@ slint::slint! {
         background: rgba(0, 0, 0, 0.5);
         no-frame: true;
         title: "Blåhaj";
-        width: 415px;
-        height: 559px;
+        width: 410px;
+        height: 563px;
         Text { text: "Hello World!"; x:0;y:0;}
 
         Image { source: @image-url("backdrop.png");}
