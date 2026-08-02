@@ -1,21 +1,74 @@
 slint::slint! {
     export component App inherits Window {
-        background: rgba(0, 0, 0, 0.5);
+        background: rgba(0, 0, 0, 0);
         no-frame: true;
+        always-on-top: true;
         title: "Blåhaj";
         width: 410px;
         height: 563px;
-        Text { text: "Hello World!"; x:0;y:0;}
 
         Image { source: @image-url("backdrop.png");}
-        Image { source: @image-url("blahaj.png"); width: 300px; x:100px;}
-        img:= Image { source: @image-url("egg.png");}
+        Image { source: @image-url("blahaj.png"); width: 300px; x:100px; y:170px;}
+        Image { source: @image-url("egg.png");}
+        buttons := Image { source: @image-url("buttons/unpressed.png");}
         callback mouse_move(length, length);
 
         TouchArea {
             moved => {
                 if (self.pressed ) {
                     root.mouse_move((self.mouse_x) - self.pressed_x, (self.mouse_y) - self.pressed_y);
+                }
+            }
+        }
+        TouchArea {
+            width:22px;
+            height:25px;
+            x:375px;
+            y:5px;
+            clicked => {
+                root.close()
+            }
+        }
+        // buttons:
+        b1:=TouchArea {
+            width:38px;
+            height:41px;
+            x:100px;
+            y:472px;
+            pointer-event => {
+                if (self.pressed) {
+                    buttons.source = @image-url("buttons/0.png");
+                }
+                if (!b1.pressed && !b2.pressed && !b3.pressed) {
+                    buttons.source = @image-url("buttons/unpressed.png");
+                }
+            }
+        }
+        b2:=TouchArea {
+            width:38px;
+            height:41px;
+            x:182px;
+            y:491px;
+            pointer-event => {
+                if (self.pressed) {
+                    buttons.source = @image-url("buttons/1.png");
+                }
+                if (!b1.pressed && !b2.pressed && !b3.pressed) {
+                    buttons.source = @image-url("buttons/unpressed.png");
+                }
+            }
+        }
+        b3:=TouchArea {
+            width:38px;
+            height:41px;
+            x:260px;
+            y:472px;
+            pointer-event => {
+                if (self.pressed) {
+                    buttons.source = @image-url("buttons/2.png");
+                }
+                if (!b1.pressed && !b2.pressed && !b3.pressed) {
+                    buttons.source = @image-url("buttons/unpressed.png");
                 }
             }
         }
