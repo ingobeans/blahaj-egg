@@ -42,19 +42,20 @@ slint::slint! {
         }
     }
     component Clock inherits Image {
+        in property <int> target_minutes: 30;
         in property <int> seconds;
         source: @image-url("clock/base.png");
 
         pointer:=Image {
             source: @image-url("clock/pointer.png");
-            transform-rotation: seconds / (5.0*60.0) * 360.0deg;
+            transform-rotation: seconds / (target_minutes*60.0) * 360.0deg;
             x:116px;
             y:265px;
         }
 
         text:=Text {
             text: {
-                let remaining = 60*5 - seconds;
+                let remaining = 60*(target_minutes) - seconds;
                 let p1 = (Math.floor(remaining / 60)) + "";
                 let p2 = (Math.mod(remaining,60)) + "";
                 if (p1.character-count == 1) {
@@ -139,7 +140,7 @@ slint::slint! {
                     b2.glyph_set = true;
                     b3.glyph_set = true;
                     b2.glyph = @image-url("glyphs/pause.png");
-                    b3.glyph = @image-url("glyphs/timer.png");
+                    b3.glyph = @image-url("glyphs/30-5.png");
                 } else {
                     state = 0;
                     b2.glyph_set = false;
@@ -167,6 +168,17 @@ slint::slint! {
             x:260px;
             y:472px;
             default_glyph: @image-url("glyphs/menu.png");
+            clicked => {
+                if (state == 1) {
+                    if (clock.target_minutes == 30) {
+                        clock.target_minutes = 5;
+                        self.glyph = @image-url("glyphs/5-30.png");
+                    } else {
+                        clock.target_minutes = 30;
+                        self.glyph = @image-url("glyphs/30-5.png");
+                    }
+                }
+            }
         }
     }
 }
@@ -209,7 +221,7 @@ fn main() {
             *PAUSED_AT.lock().unwrap() = Some(Instant::now());
         }
         if !state {
-            let passed = (PAUSED_AT.lock().unwrap().unwrap() - START.lock().unwrap().unwrap());
+            let passed = PAUSED_AT.lock().unwrap().unwrap() - START.lock().unwrap().unwrap();
             *START.lock().unwrap() = Some(Instant::now()-passed);
         }
     });
