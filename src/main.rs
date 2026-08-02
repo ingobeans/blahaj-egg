@@ -4,6 +4,8 @@ slint::slint! {
         no-frame: true;
         title: "Blåhaj";
         Text { text: "Hello World!"; }
+
+        Image { source: @image-url("blahaj.png"); }
     }
 }
 
