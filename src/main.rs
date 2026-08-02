@@ -1,8 +1,8 @@
-use std::{borrow::Cow, collections::HashMap, sync::Mutex, time::Instant};
+use std::{borrow::Cow, collections::HashMap, sync::{LazyLock, Mutex}, time::{Duration, Instant}};
 
 use gif::DisposalMethod;
 use rgb::{Rgba};
-use slint::{Image};
+use slint::{Image, SharedString};
 
 
 slint::slint! {
@@ -55,6 +55,7 @@ slint::slint! {
         in-out property <int> anim_time;
         property <int> atime;
         in-out property <bool> playing: false;
+        in-out property <string> text: "hello, world";
 
         in-out property<duration> ticker: animation-tick();
         in-out property<duration> delta: 0ms;
@@ -66,8 +67,8 @@ slint::slint! {
             opacity: 0.0;
             source: @image-url("blahaj-talk-bubble.png");
             Text {
-                text: "hello";
-                x:16px;
+                text: root.text;
+                x:9px;
                 y:16px;
                 color:black;
             }
@@ -96,11 +97,12 @@ slint::slint! {
                     bubble.opacity = 1.0;
                 }
                 (atime) -= 300;
-                (atime) -= 6000;
+                (atime) -= 3000;
                 if atime > 0 && atime <= 500 {
                     self.opacity = 1.0 - Math.min(atime / 300.0, 1.0);
                     self.x = 126px + atime / 500 * 58px;
                 } else if atime > 0 {
+                    bubble.opacity = 0.0;
                     self.opacity = 0.0;
                     self.x = 186px;
                     self.playing = false;
@@ -164,6 +166,7 @@ slint::slint! {
         in-out property<duration> delta: 0ms;
         in-out property<duration> prev-ticker: 0ms;
         callback callback_ticker() -> int;
+        callback should_show_message() -> string;
         callback start_timer();
         callback set_pause_timer(bool);
         changed ticker => {
@@ -179,6 +182,12 @@ slint::slint! {
                     b2.glyph = @image-url("glyphs/play.png");
                     confetti.visible = true;
                 }
+            }
+            let msg = should_show_message();
+            if (msg != "") {
+                blahaj-talk.text = msg;
+                blahaj-talk.playing = true;
+                blahaj-talk.anim_time = 0;
             }
             if (confetti.visible) {
                 confetti.source = load_gif_frame("confetti.gif", animation-tick() / 1ms);
@@ -198,11 +207,9 @@ slint::slint! {
         blahaj:= Image { source: @image-url("blahaj.png"); width: 300px; x:100px; y:170px;}
         confetti := Image { y:220px; visible: false;}
         pat := Image { visible: false;}
+        clock := Clock { visible: false; }
         blahaj-talk := BlahajTalk {}
         Image { source: @image-url("egg.png");}
-        clock := Clock {
-            visible: false;
-        }
         callback mouse_move(length, length);
 
         TouchArea {
@@ -299,7 +306,11 @@ slint::slint! {
 static START: Mutex<Option<Instant>>  = Mutex::new(None);
 static PAUSED_AT: Mutex<Option<Instant>>  = Mutex::new(None);
 static PAUSED: Mutex<bool>  = Mutex::new(false);
+static NEXT_MSG_AT: Mutex<Option<Instant>>  = Mutex::new(None);
 
+static MESSAGES: LazyLock<Vec<String>> = LazyLock::new(|| {
+    include_str!("messages.txt").split("#").map(|f| f.to_string()).collect::<Vec<String>>()
+});
 
 fn main() {
     println!("{}, v{}", env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
@@ -354,8 +365,14 @@ fn main() {
         let l = g.0.len();
         g.0[(b as f32 * g.1 / 1000.0) as usize % l].clone()
     });
+    fn get_next_msg_at() ->Instant {
+        let t = rand::random_range(12..120);
+        println!("next message in: {t}s");
+        Instant::now()+Duration::from_secs(t)
+    }
     app.on_start_timer(|| {
         *START.lock().unwrap() = Some(Instant::now());
+        *NEXT_MSG_AT.lock().unwrap() = Some(get_next_msg_at());
     });
     app.on_set_pause_timer(|state| {
         *PAUSED.lock().unwrap() = state;
@@ -366,6 +383,19 @@ fn main() {
             let passed = PAUSED_AT.lock().unwrap().unwrap() - START.lock().unwrap().unwrap();
             *START.lock().unwrap() = Some(Instant::now()-passed);
         }
+    });
+
+    app.on_should_show_message(|| {
+        let now = Instant::now();
+        let r = NEXT_MSG_AT.lock().unwrap().map_or(false, |v| now > v);
+        let mut t = String::new();
+        if r {
+            *NEXT_MSG_AT.lock().unwrap() = Some(get_next_msg_at());
+            if !*PAUSED.lock().unwrap() {
+                t = MESSAGES[rand::random_range(0..MESSAGES.len())].clone()
+            }
+        }
+        SharedString::from(t)
     });
 
     app.on_callback_ticker(move || {
