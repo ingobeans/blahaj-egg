@@ -92,6 +92,8 @@ slint::slint! {
         property <int> state;
         property <bool> timer_paused;
 
+        property <int> pat_time;
+
         in-out property<duration> ticker: animation-tick();
         in-out property<duration> delta: 0ms;
         in-out property<duration> prev-ticker: 0ms;
@@ -115,6 +117,13 @@ slint::slint! {
             if (confetti.visible) {
                 confetti.source = load_gif_frame("confetti.gif", animation-tick() / 1ms);
             }
+            if (pat.visible) {
+                pat_time += delta / 1ms;
+                pat.source = load_gif_frame("pat.gif", pat_time);
+                if (pat_time * 30.0 / 1000.0 > 21.0) {
+                    pat.visible = false;
+                }
+            }
         };
 
         callback load_gif_frame(string, int) -> image;
@@ -122,6 +131,7 @@ slint::slint! {
         Image { source: @image-url("backdrop.png");}
         blahaj:= Image { source: @image-url("blahaj.png"); width: 300px; x:100px; y:170px;}
         confetti := Image { y:220px; visible: false;}
+        pat := Image { visible: false;}
         Image { source: @image-url("egg.png");}
         clock := Clock {
             visible: false;
@@ -186,6 +196,13 @@ slint::slint! {
                         self.glyph = @image-url("glyphs/pause.png");
                     }
                     set_pause_timer(timer_paused);
+                } else if state == 0 {
+                    if (pat.visible) {
+                        pat_time = 11 * 1000.0 / 30.0;
+                    } else {
+                        pat_time = 0;
+                        pat.visible = true;
+                    }
                 }
             }
         }
@@ -237,9 +254,9 @@ fn main() {
             ));
     });
 
-    let mut gifs: HashMap<&str, Vec<Image>> = HashMap::new();
+    let mut gifs: HashMap<&str, (Vec<Image>,f32)> = HashMap::new();
     
-    fn preload_gif(gifs: &mut HashMap<&str, Vec<Image>>, name:&'static str, bytes:&[u8]) {
+    fn preload_gif(gifs: &mut HashMap<&str, (Vec<Image>,f32)>, name:&'static str, bytes:&[u8], speed:f32) {
         let mut options = gif::DecodeOptions::new();
         options.set_color_output(gif::ColorOutput::RGBA);
         
@@ -255,13 +272,16 @@ fn main() {
             let image: Image = Image::from_rgba8(slint_pixel_buffer);
             frames.push(image);
         }
-        gifs.insert(name, frames);
+        gifs.insert(name, (frames,speed));
     }
-    preload_gif(&mut gifs, "confetti.gif", include_bytes!("../confetti.gif"));
+    preload_gif(&mut gifs, "confetti.gif", include_bytes!("../confetti.gif"),15.0);
+    preload_gif(&mut gifs, "pat.gif", include_bytes!("../pat.gif"),30.0);
+
+
     app.on_load_gif_frame(move |a,b| {
         let g = &gifs[a.to_string().as_str()];
-        let l = g.len();
-        g[(b as f32 / 1000.0 * 15.0) as usize % l].clone()
+        let l = g.0.len();
+        g.0[(b as f32 * g.1 / 1000.0) as usize % l].clone()
     });
     app.on_start_timer(|| {
         *START.lock().unwrap() = Some(Instant::now());
