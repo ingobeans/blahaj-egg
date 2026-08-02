@@ -1,7 +1,9 @@
 [package]
 name = "raise-a-blahaj"
-version = "0.1.14"
+version = "0.1.15"
 edition = "2024"
 
 [dependencies]
+gif = "0.14.2"
 slint = "1.17.1"
+rgb = "0.8.53"
