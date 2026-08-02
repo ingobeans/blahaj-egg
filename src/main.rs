@@ -87,6 +87,7 @@ slint::slint! {
         no-frame: true;
         always-on-top: true;
         title: "Blåhaj";
+        icon: @image-url("blahaj.png");
         width: 410px;
         height: 563px;
 
