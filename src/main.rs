@@ -1,7 +1,7 @@
-use std::{borrow::Cow, cmp::Ordering, collections::HashMap, process::exit, sync::Mutex, time::Instant};
+use std::{borrow::Cow, collections::HashMap, sync::Mutex, time::Instant};
 
 use gif::DisposalMethod;
-use rgb::{ComponentBytes, Rgba};
+use rgb::{Rgba};
 use slint::{Image};
 
 
@@ -261,14 +261,14 @@ fn main() {
         let mut options = gif::DecodeOptions::new();
         options.set_color_output(gif::ColorOutput::RGBA);
         
-        let decoder = options.read_info(&bytes[..]).unwrap();
+        let decoder = options.read_info(bytes).unwrap();
         let mut frames = Vec::new();
         for frame in decoder.into_iter().flatten() {
             let mut slint_pixel_buffer =
                 slint::SharedPixelBuffer::<slint::Rgba8Pixel>::new(frame.width as _, frame.height as _);
                 
                 unsafe {
-                    let g = std::mem::transmute::<_,FrameHm>(frame);
+                    let g = std::mem::transmute::<gif::Frame<'_>, FrameHm>(frame);
                     let l = slint_pixel_buffer.as_slice().len();
                     slint_pixel_buffer.make_mut_slice().copy_from_slice(&g.buffer[..l]);
                     let image: Image = Image::from_rgba8(slint_pixel_buffer);
