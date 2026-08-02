@@ -46,6 +46,70 @@ slint::slint! {
             height:41px;
         }
     }
+    component BlahajTalk inherits Image {
+        source: @image-url("blahaj-talk.png");
+
+        x:184px;
+        y:317px;
+        
+        in-out property <int> anim_time;
+        property <int> atime;
+        in-out property <bool> playing: false;
+
+        in-out property<duration> ticker: animation-tick();
+        in-out property<duration> delta: 0ms;
+        in-out property<duration> prev-ticker: 0ms;
+
+        opacity: 0.0;
+
+        bubble:=Image {
+            opacity: 0.0;
+            source: @image-url("blahaj-talk-bubble.png");
+            Text {
+                text: "hello";
+                x:16px;
+                y:16px;
+                color:black;
+            }
+        }
+
+        changed ticker => {
+            if playing {
+                delta = ((ticker) - prev-ticker);
+                anim_time += delta / 1ms;
+                atime = anim_time;
+                if atime <= 300 {
+                    self.opacity = atime / 300.0;
+                } else if atime > 0 {
+                    self.opacity = 1.0;
+                }
+                (atime) -= 300;
+                if atime > 0 && atime <= 500 {
+                    self.x = 184px - atime / 500 * 58px;
+                } else if atime > 0 {
+                    self.x = 126px;
+                }
+                (atime) -= 500;
+                if atime > 0 && atime <= 300 {
+                    bubble.opacity = atime / 300.0;
+                } else if atime > 0 {
+                    bubble.opacity = 1.0;
+                }
+                (atime) -= 300;
+                (atime) -= 6000;
+                if atime > 0 && atime <= 500 {
+                    self.opacity = 1.0 - Math.min(atime / 300.0, 1.0);
+                    self.x = 126px + atime / 500 * 58px;
+                } else if atime > 0 {
+                    self.opacity = 0.0;
+                    self.x = 186px;
+                    self.playing = false;
+                    self.anim_time = 0.0;
+                }
+            }
+            prev-ticker = ticker;
+        }
+    }
     component Clock inherits Image {
         in property <int> target_minutes: 30;
         in property <int> seconds;
@@ -134,6 +198,7 @@ slint::slint! {
         blahaj:= Image { source: @image-url("blahaj.png"); width: 300px; x:100px; y:170px;}
         confetti := Image { y:220px; visible: false;}
         pat := Image { visible: false;}
+        blahaj-talk := BlahajTalk {}
         Image { source: @image-url("egg.png");}
         clock := Clock {
             visible: false;
@@ -222,6 +287,9 @@ slint::slint! {
                         clock.target_minutes = 30;
                         self.glyph = @image-url("glyphs/30-5.png");
                     }
+                }else if state == 0 {
+                    blahaj-talk.playing = true;
+                    blahaj-talk.anim_time = 0;
                 }
             }
         }
