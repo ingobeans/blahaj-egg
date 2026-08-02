@@ -163,6 +163,10 @@ slint::slint! {
                     b3.glyph = @image-url("glyphs/30-5.png");
                 } else {
                     state = 0;
+                    if timer_paused {
+                        set_pause_timer(false);
+                        timer_paused = false;
+                    }
                     b2.glyph_set = false;
                     b3.glyph_set = false;
                 }
