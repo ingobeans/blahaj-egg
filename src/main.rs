@@ -184,7 +184,7 @@ slint::slint! {
             prev-ticker = ticker;
             let value = callback_ticker();
             clock.seconds = value;
-            if (value >= 1*clock.target_minutes) {
+            if (value >= 60*clock.target_minutes) {
                 if !timer_paused {
                     timer_paused=true;
                     start_timer();
