@@ -220,7 +220,7 @@ slint::slint! {
         energy_contents:= Rectangle {
             x:102px;
             y:235px;
-            width:193px * energy / 1000;
+            width:193px * min(energy / 1000.0, 1.0);
             height:10px;
             background: #FF7F00;
         }
