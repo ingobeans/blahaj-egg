@@ -8,6 +8,7 @@ a mysterious egg appears on your desktop!! inside, a blåhaj!!
 
 * you can pet the blåhaj ! 
 * you can start a pomodoro timer (30 or 5 minutes). you get confetti upon completion :3
+* energy bar!! pet blåhaj and complete pomodoro timers to increase energy. resets daily.
 * a loving prescence in your life <3
 
 ## technical
