@@ -169,6 +169,7 @@ slint::slint! {
         property <bool> timer_paused;
 
         property <int> pat_time;
+        property <int> energy: 0;
 
         in-out property<duration> ticker: animation-tick();
         in-out property<duration> delta: 0ms;
@@ -182,12 +183,13 @@ slint::slint! {
             prev-ticker = ticker;
             let value = callback_ticker();
             clock.seconds = value;
-            if (value >= 60*clock.target_minutes) {
+            if (value >= 1*clock.target_minutes) {
                 if !timer_paused {
                     timer_paused=true;
                     start_timer();
                     set_pause_timer(true);
                     b2.glyph = @image-url("glyphs/play.png");
+                    energy += clock.target_minutes*15;
                     confetti.visible = true;
                 }
             }
@@ -213,6 +215,14 @@ slint::slint! {
 
         Image { source: @image-url("backdrop.png");}
         blahaj:= Image { source: @image-url("blahaj.png");}
+        Rectangle {
+            x:102px;
+            y:235px;
+            width:193px * energy / 1000;
+            height:10px;
+            background: #FF7F00;
+        }
+        energy_bar:= Image { source: @image-url("energy_bar.png");}
         confetti := Image { y:220px; visible: false;}
         pat := Image { visible: false;}
         clock := Clock { visible: false; }
@@ -246,18 +256,23 @@ slint::slint! {
                 confetti.visible = false;
                 clock.visible = !clock.visible;
                 blahaj.visible = !blahaj.visible;
+                energy_bar.visible = blahaj.visible;
                 if (clock.visible) {
                     state = 1;
                     start_timer();
+                    if timer_paused {
+                        set_pause_timer(false);
+                        timer_paused = false;
+                    }
                     b2.glyph_set = true;
                     b3.glyph_set = true;
                     b2.glyph = @image-url("glyphs/pause.png");
                     b3.glyph = @image-url("glyphs/30-5.png");
                 } else {
                     state = 0;
-                    if timer_paused {
-                        set_pause_timer(false);
-                        timer_paused = false;
+                    if !timer_paused {
+                        set_pause_timer(true);
+                        timer_paused = true;
                     }
                     b2.glyph_set = false;
                     b3.glyph_set = false;
@@ -279,6 +294,7 @@ slint::slint! {
                     }
                     set_pause_timer(timer_paused);
                 } else if state == 0 {
+                    energy += 2;
                     if (pat.visible) {
                         pat_time = 11 * 1000.0 / 30.0;
                     } else {
