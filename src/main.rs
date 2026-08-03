@@ -212,8 +212,12 @@ slint::slint! {
         callback load_gif_frame(string, int) -> image;
 
         Image { source: @image-url("backdrop.png");}
-        blahaj:= Image { source: @image-url("blahaj.png"); width: 300px; x:100px; y:170px;}
-ng");}
+        blahaj:= Image { source: @image-url("blahaj.png");}
+        confetti := Image { y:220px; visible: false;}
+        pat := Image { visible: false;}
+        clock := Clock { visible: false; }
+        blahaj-talk := BlahajTalk {}
+        Image { source: @image-url("egg.png");}
         callback mouse_move(length, length);
 
         TouchArea {
