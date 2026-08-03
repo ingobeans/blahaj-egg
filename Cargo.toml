@@ -1,6 +1,6 @@
 [package]
 name = "blahaj-egg"
-version = "0.1.25"
+version = "0.1.26"
 edition = "2024"
 
 [dependencies]
@@ -8,3 +8,4 @@ gif = "0.14.2"
 slint = "1.17.1"
 rgb = "0.8.53"
 rand = "0.10.2"
+chrono = "0.4.45"

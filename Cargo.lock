@@ -474,8 +474,9 @@ dependencies = [
 
 [[package]]
 name = "blahaj-egg"
-version = "0.1.25"
+version = "0.1.26"
 dependencies = [
+ "chrono",
  "gif",
  "rand",
  "rgb",

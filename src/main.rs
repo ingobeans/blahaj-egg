@@ -6,7 +6,7 @@
   windows_subsystem = "windows"
 )]
 
-use std::{borrow::Cow, collections::HashMap, sync::{LazyLock, Mutex}, time::{Duration, Instant}};
+use std::{borrow::Cow, collections::HashMap, path::PathBuf, sync::{LazyLock, Mutex}, time::{Duration, Instant}};
 
 use gif::DisposalMethod;
 use rgb::{Rgba};
@@ -169,7 +169,7 @@ slint::slint! {
         property <bool> timer_paused;
 
         property <int> pat_time;
-        property <int> energy: 0;
+        in-out property <int> energy: 0;
 
         in-out property<duration> ticker: animation-tick();
         in-out property<duration> delta: 0ms;
@@ -177,6 +177,7 @@ slint::slint! {
         callback callback_ticker() -> int;
         callback should_show_message() -> string;
         callback start_timer();
+        callback save_energy(int);
         callback set_pause_timer(bool);
         changed ticker => {
             delta = ((ticker) - prev-ticker);
@@ -190,6 +191,7 @@ slint::slint! {
                     set_pause_timer(true);
                     b2.glyph = @image-url("glyphs/play.png");
                     energy += clock.target_minutes*15;
+                    save_energy(energy);
                     confetti.visible = true;
                 }
             }
@@ -215,7 +217,7 @@ slint::slint! {
 
         Image { source: @image-url("backdrop.png");}
         blahaj:= Image { source: @image-url("blahaj.png");}
-        Rectangle {
+        energy_contents:= Rectangle {
             x:102px;
             y:235px;
             width:193px * energy / 1000;
@@ -257,6 +259,7 @@ slint::slint! {
                 clock.visible = !clock.visible;
                 blahaj.visible = !blahaj.visible;
                 energy_bar.visible = blahaj.visible;
+                energy_contents.visible = blahaj.visible;
                 if (clock.visible) {
                     state = 1;
                     start_timer();
@@ -295,6 +298,7 @@ slint::slint! {
                     set_pause_timer(timer_paused);
                 } else if state == 0 {
                     energy += 2;
+                    save_energy(energy);
                     if (pat.visible) {
                         pat_time = 11 * 1000.0 / 30.0;
                     } else {
@@ -336,6 +340,32 @@ static MESSAGES: LazyLock<Vec<String>> = LazyLock::new(|| {
     include_str!("messages.txt").split("#").map(|f| f.to_string()).collect::<Vec<String>>()
 });
 
+fn get_date()->String {
+    format!("{:?}", chrono::offset::Local::now().date_naive())
+}
+
+fn read_data()->Option<(PathBuf, i32)> {
+    let mut data = 0;
+    let path = std::env::current_exe().ok()?;
+    let parent = path.parent()?;
+    let data_path = parent.join("data.txt");
+    fn read_path(data_path: &PathBuf)->Option<i32> {
+        let p = std::fs::read_to_string(&data_path).ok()?;
+        let mut l = p.split("\n");
+        let date = l.next()?;
+        let value: i32 = l.next()?.parse().ok()?;
+        if date == get_date() {
+            return Some(value)
+        }
+        None
+    }
+    if data_path.exists() && let Some(value) = read_path(&data_path) {
+        data = value;
+    }
+    
+    Some((data_path,data))
+}
+
 fn main() {
     println!("{}, v{}", env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
     let app = App::new().unwrap();
@@ -343,6 +373,17 @@ fn main() {
     app
         .window()
         .set_position(slint::LogicalPosition::new(0., 0.));
+
+    let data = read_data();
+    if let Some((_,value)) = &data {
+        app.set_energy(*value);
+    }
+
+    app.on_save_energy(move |e| {
+        if let Some((path,_)) = &data {
+            std::fs::write(path, get_date()+"\n"+&e.to_string()).unwrap();
+        }
+    });
 
     let app_clone = app.as_weak();
     app.on_mouse_move(move |delta_x, delta_y| {
