@@ -1,3 +1,11 @@
+#![cfg_attr(
+  all(
+    target_os = "windows",
+    not(debug_assertions),
+  ),
+  windows_subsystem = "windows"
+)]
+
 use std::{borrow::Cow, collections::HashMap, sync::{LazyLock, Mutex}, time::{Duration, Instant}};
 
 use gif::DisposalMethod;
@@ -205,11 +213,7 @@ slint::slint! {
 
         Image { source: @image-url("backdrop.png");}
         blahaj:= Image { source: @image-url("blahaj.png"); width: 300px; x:100px; y:170px;}
-        confetti := Image { y:220px; visible: false;}
-        pat := Image { visible: false;}
-        clock := Clock { visible: false; }
-        blahaj-talk := BlahajTalk {}
-        Image { source: @image-url("egg.png");}
+ng");}
         callback mouse_move(length, length);
 
         TouchArea {
