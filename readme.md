@@ -11,6 +11,20 @@ a mysterious egg appears on your desktop!! inside, a blåhaj!!
 * energy bar!! pet blåhaj and complete pomodoro timers to increase energy. resets daily.
 * a loving prescence in your life <3
 
+## install
+
+this project is cross-compatible and tested on windows, linux and macos.
+
+there are binaries under [releases](https://github.com/ingobeans/blahaj-egg/releases), for windows only.
+
+if you want to install from source, you'll need rust installed, then you can run:
+
+```bash
+cargo install --git https://github.com/ingobeans/blahaj-egg.git
+```
+
+to install. it should then be available on path as `blahaj-egg`
+
 ## technical
 
 made with rust and slint for UI.
