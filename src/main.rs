@@ -11,6 +11,8 @@ use std::{borrow::Cow, collections::HashMap, path::PathBuf, sync::{LazyLock, Mut
 use gif::DisposalMethod;
 use rgb::{Rgba};
 use slint::{Image, SharedString};
+use url::Url;
+use url_open::UrlOpen;
 
 
 slint::slint! {
@@ -231,6 +233,7 @@ slint::slint! {
         blahaj-talk := BlahajTalk {}
         Image { source: @image-url("egg.png");}
         callback mouse_move(length, length);
+        callback open_repo();
 
         TouchArea {
             moved => {
@@ -323,8 +326,7 @@ slint::slint! {
                         self.glyph = @image-url("glyphs/30-5.png");
                     }
                 }else if state == 0 {
-                    blahaj-talk.playing = true;
-                    blahaj-talk.anim_time = 0;
+                    open_repo()
                 }
             }
         }
@@ -398,6 +400,10 @@ fn main() {
                 logical_pos.x + delta_x,
                 logical_pos.y + delta_y,
             ));
+    });
+
+    app.on_open_repo(|| {
+        Url::parse("https://github.com/ingobeans/blahaj-egg").unwrap().open();
     });
 
     let mut gifs: HashMap<&str, (Vec<Image>,f32)> = HashMap::new();

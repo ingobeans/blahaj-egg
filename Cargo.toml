@@ -1,6 +1,6 @@
 [package]
 name = "blahaj-egg"
-version = "0.1.27"
+version = "0.1.28"
 edition = "2024"
 
 [dependencies]
@@ -9,3 +9,5 @@ slint = "1.17.1"
 rgb = "0.8.53"
 rand = "0.10.2"
 chrono = "0.4.45"
+url_open = "0.0.2"
+url = "2.5.8"
